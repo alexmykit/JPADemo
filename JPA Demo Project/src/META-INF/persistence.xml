@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd"
+	version="1.0">
+
+	<persistence-unit name="JPATest" transaction-type="RESOURCE_LOCAL">
+		<provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+		
+		<properties>
+			<!-- if this is true, hibernate will print (to stdout) the SQL it executes, 
+				so you can check it to ensure it's not doing anything crazy -->
+			<property name="hibernate.show_sql" value="false" />
+						
+			<property name="hibernate.format_sql" value="false" />
+			<!-- since most database servers have slightly different versions of the 
+				SQL, Hibernate needs you to choose a dialect so it knows the subtleties of 
+				talking to that server -->
+			<property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect" />
+			<!-- this tell Hibernate to update the DDL when it starts, very useful 
+				for development, dangerous in production -->
+			<property name="hibernate.hbm2ddl.auto" value="validate" />
+
+			<property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver" />
+			<property name="hibernate.connection.url" value="jdbc:mysql://localhost/testJpaDb" />
+
+			<property name="hibernate.connection.username" value="root" />
+			<property name="hibernate.connection.password" value="root" />
+		</properties>
+	</persistence-unit>
+</persistence>
