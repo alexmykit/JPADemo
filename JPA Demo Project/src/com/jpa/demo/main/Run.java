@@ -45,13 +45,15 @@ public class Run
 			EntityManager em = emf.createEntityManager();
 			Context rootContext = createRootContext(em);
 			
-			showAvgSallaryPerDepartment(rootContext);
-			System.out.println();
-			
-			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.HOME));
-			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.MOBILE));
-			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.MOBILE, PhoneType.HOME));
-			showEmployeesWithPhoneTypes(rootContext, EnumSet.noneOf(PhoneType.class));
+//			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.MOBILE), false);
+//			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.HOME), false);
+//			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.HOME, PhoneType.MOBILE), false);
+//			showEmployeesWithPhoneTypes(rootContext, EnumSet.noneOf(PhoneType.class), false);
+			System.out.println("---------------------------------------------------------------------------------");
+			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.MOBILE), true);
+//			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.HOME), true);
+//			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.HOME, PhoneType.MOBILE), true);
+//			showEmployeesWithPhoneTypes(rootContext, EnumSet.noneOf(PhoneType.class), true);
 		}
 		finally
 		{
@@ -62,11 +64,11 @@ public class Run
 		}
 	}
 	
-	public static void showEmployeesWithPhoneTypes(Context rootContext, EnumSet<PhoneType> phoneTypes)
+	public static void showEmployeesWithPhoneTypes(Context rootContext, EnumSet<PhoneType> phoneTypes, boolean useCriteria)
 	{
 		EmployeeService empService = rootContext.lookupService("EmployeeService", EmployeeService.class);
 		
-		List<Employee> employeesWithPhoneTypes = empService.getEmployeesWithPhoneKinds(phoneTypes);
+		List<Employee> employeesWithPhoneTypes = useCriteria ? empService.getEmployyeeWithPhoneKindsCriteria(phoneTypes) : empService.getEmployeesWithPhoneKinds(phoneTypes);
 		
 		System.out.println("Number of employees with phones of types " + phoneTypes + " is " + employeesWithPhoneTypes.size());
 		
@@ -78,11 +80,11 @@ public class Run
 		}
 	}
 	
-	public static void showTotalEmployeeVacations(Context rootContext)
+	public static void showTotalEmployeeVacations(Context rootContext, boolean useCriteria)
 	{
 		EmployeeService empService = rootContext.lookupService("EmployeeService", EmployeeService.class);
 		
-		List<EmployeeVacationDuration> empVacations = empService.getEmployeeTotalVacationDurations();
+		List<EmployeeVacationDuration> empVacations = useCriteria ? empService.getEmployeeTotalVacationDurationsCriteria() : empService.getEmployeeTotalVacationDurations();
 		
 		for(EmployeeVacationDuration vacationDuration : empVacations)
 		{
@@ -90,11 +92,11 @@ public class Run
 		}
 	}
 	
-	public static void showEmployeesWithoutVacations(Context rootContext)
+	public static void showEmployeesWithoutVacations(Context rootContext, boolean useCriteria)
 	{
 		EmployeeService empService = rootContext.lookupService("EmployeeService", EmployeeService.class);
 		
-		List<Employee> employessWithoutVacations = empService.getEmployeesWithoutVacations();
+		List<Employee> employessWithoutVacations = useCriteria ? empService.getEmployeesWithoutVacationsCriteria() : empService.getEmployeesWithoutVacations();
 		
 		System.out.println("Total number of employees without vacations is " + employessWithoutVacations.size());
 		for (Employee emp : employessWithoutVacations)
@@ -103,11 +105,11 @@ public class Run
 		}
 	}
 	
-	public static void showEmployeesWithSallaryHgherThenAvgInEachDepartment(Context rootContext)
+	public static void showEmployeesWithSallaryHgherThenAvgInEachDepartment(Context rootContext, boolean useCriteria)
 	{
 		EmployeeService empService = rootContext.lookupService("EmployeeService", EmployeeService.class);
 		
-		List<Employee> empList = empService.getEmployeesWithSallaryHigherThenAvgSallaryInDepartment();
+		List<Employee> empList = useCriteria ? empService.getEmployeesWithSallaryHigherThenAvgSallaryInDepartmentCriteria() : empService.getEmployeesWithSallaryHigherThenAvgSallaryInDepartment();
 		
 		for (Employee emp : empList)
 		{
@@ -115,11 +117,11 @@ public class Run
 		}
 	}
 	
-	public static void showAvgSallaryPerDepartment(Context rootContext)
+	public static void showAvgSallaryPerDepartment(Context rootContext, boolean useCriteria)
 	{
 		EmployeeService empService = rootContext.lookupService("EmployeeService", EmployeeService.class);
 		
-		Map<String, Double> avgSallary = empService.getAvgSallaryInEachDepartment();
+		Map<String, Double> avgSallary = useCriteria ? empService.getAvgSallaryInEachDepartmentCriteria() : empService.getAvgSallaryInEachDepartment();
 		
 		for (Map.Entry<String, Double> entry : avgSallary.entrySet())
 		{
@@ -127,11 +129,11 @@ public class Run
 		}
 	}
 	
-	public static void listAllEmployees(Context rootContext)
+	public static void listAllEmployees(Context rootContext, boolean useCriteria)
 	{
 		EmployeeService empService = rootContext.lookupService("EmployeeService", EmployeeService.class);
 		
-		List<Employee> allEmployees = empService.getAllEmployees();
+		List<Employee> allEmployees = useCriteria ? empService.getAllEmployeesCriteria() : empService.getAllEmployees();
 		
 		System.out.println("Total employees found: " + allEmployees.size());
 		for (Employee e : allEmployees)

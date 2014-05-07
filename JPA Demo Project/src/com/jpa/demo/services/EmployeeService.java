@@ -9,7 +9,17 @@ import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
+import javax.persistence.Tuple;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.MapJoin;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Subquery;
+
+import org.hibernate.engine.jdbc.spi.TypeSearchability;
 
 import com.jpa.demo.model.Address;
 import com.jpa.demo.model.Company;
@@ -17,6 +27,7 @@ import com.jpa.demo.model.Department;
 import com.jpa.demo.model.Employee;
 import com.jpa.demo.model.EmployeeType;
 import com.jpa.demo.model.ParkingSpace;
+import com.jpa.demo.model.Phone;
 import com.jpa.demo.model.PhoneType;
 import com.jpa.demo.model.VacationEntry;
 
@@ -114,9 +125,19 @@ public class EmployeeService extends AbstractJPAService
 		return findAllQuery.getResultList();
 	}
 	
+	public List<Employee> getAllEmployeesCriteria()
+	{
+		CriteriaBuilder builder = manager.getCriteriaBuilder();
+		
+		CriteriaQuery<Employee> query = builder.createQuery(Employee.class);
+		query.from(Employee.class);
+		
+		return manager.createQuery(query).getResultList();
+	}
+	
 	public Map<String, Double> getAvgSallaryInEachDepartment()
 	{
-		Map<String, Double> avgSallaryInDepartments = new HashMap<String, Double>();
+		Map<String, Double> avgSallaryInDepartments = new HashMap<>();
 		
 		Query avgSallaryPerDeptQuery = manager.createQuery("SELECT dep.departmentName, AVG(emp.sallary) FROM Department dep JOIN dep.employees emp GROUP BY dep");
 		List results = avgSallaryPerDeptQuery.getResultList();
@@ -131,11 +152,52 @@ public class EmployeeService extends AbstractJPAService
 		return avgSallaryInDepartments;
 	}
 	
+	public Map<String, Double> getAvgSallaryInEachDepartmentCriteria()
+	{
+		Map<String, Double> avgSallaryInDepartments = new HashMap<>();
+		
+		CriteriaBuilder builder = manager.getCriteriaBuilder();
+		
+		CriteriaQuery<Tuple> query = builder.createTupleQuery();
+		Root<Department> depRoot = query.from(Department.class);
+		Join<Department, Employee> depEmpJoinRoot = depRoot.join("employees");
+		
+		query.multiselect(depRoot.get("departmentName").alias("departmentName"), builder.avg(depEmpJoinRoot.<Double>get("sallary")).alias("avgSallary")).groupBy(depRoot);
+		
+		TypedQuery<Tuple> resQuery = manager.createQuery(query); 
+		
+		List<Tuple> results = resQuery.getResultList();
+		
+		for (Tuple row : results)
+		{
+			avgSallaryInDepartments.put((String)row.get("departmentName"), (Double)row.get("avgSallary"));
+		}
+		
+		return avgSallaryInDepartments;
+	}
+	
 	public List<Employee> getEmployeesWithSallaryHigherThenAvgSallaryInDepartment()
 	{
 		TypedQuery<Employee> query = manager.createQuery("SELECT e FROM Employee e WHERE e.sallary > (SELECT AVG(emps.sallary) FROM Employee emps WHERE emps.department = e.department)", Employee.class);
 		
 		return query.getResultList();
+	}
+	
+	public List<Employee> getEmployeesWithSallaryHigherThenAvgSallaryInDepartmentCriteria()
+	{
+		CriteriaBuilder builder = manager.getCriteriaBuilder();
+		
+		CriteriaQuery<Employee> critQuery = builder.createQuery(Employee.class);
+		Root<Employee> employeeRoot = critQuery.from(Employee.class);
+		Subquery<Double> sallarySubQuery = critQuery.subquery(Double.class);
+		Root<Employee> subqueryRoot = sallarySubQuery.from(Employee.class);
+		sallarySubQuery.select(builder.avg(subqueryRoot.<Double>get("sallary"))).where(builder.equal(subqueryRoot.get("department"), employeeRoot.get("department")));
+		
+		critQuery.select(employeeRoot).where(builder.gt(employeeRoot.<Double>get("sallary"), sallarySubQuery));
+		
+		TypedQuery<Employee> typedQuery = manager.createQuery(critQuery);
+		
+		return typedQuery.getResultList();
 	}
 	
 	public List<Employee> getEmployeesWithoutVacations()
@@ -145,9 +207,39 @@ public class EmployeeService extends AbstractJPAService
 		return query.getResultList();
 	}
 	
+	public List<Employee> getEmployeesWithoutVacationsCriteria()
+	{
+		CriteriaBuilder builder = manager.getCriteriaBuilder();
+		
+		CriteriaQuery<Employee> critQuery = builder.createQuery(Employee.class);
+		Root<Employee> root = critQuery.from(Employee.class);
+		
+		critQuery.select(root).where(builder.equal(builder.size(root.<List<VacationEntry>>get("vacations")), 0));
+		
+		TypedQuery<Employee> query = manager.createQuery(critQuery);
+		
+		return query.getResultList();
+	}
+	
 	public List<EmployeeVacationDuration> getEmployeeTotalVacationDurations()
 	{
 		TypedQuery<EmployeeVacationDuration> query = manager.createQuery("SELECT NEW com.jpa.demo.services.EmployeeVacationDuration(e, SUM(v.days)) FROM Employee e JOIN e.vacations v GROUP BY e", EmployeeVacationDuration.class);
+		
+		return query.getResultList();
+	}
+	
+	public List<EmployeeVacationDuration> getEmployeeTotalVacationDurationsCriteria()
+	{
+		CriteriaBuilder builder = manager.getCriteriaBuilder();
+		CriteriaQuery<EmployeeVacationDuration> critQuery = builder.createQuery(EmployeeVacationDuration.class);
+		
+		Root<Employee> empRoot = critQuery.from(Employee.class);
+		Join<Employee, VacationEntry> empVacationjoin = empRoot.join("vacations");
+		critQuery.groupBy(empRoot);
+		
+		critQuery.select(builder.construct(EmployeeVacationDuration.class, empRoot, builder.sum(empVacationjoin.<Long>get("days"))));
+		
+		TypedQuery<EmployeeVacationDuration> query = manager.createQuery(critQuery);
 		
 		return query.getResultList();
 	}
@@ -176,6 +268,56 @@ public class EmployeeService extends AbstractJPAService
 				query = manager.createQuery(queryPattern, Employee.class).setParameter("firstType", types[0]).setParameter("secondType", types[1]);
 			}
 		}
+		
+		return query.getResultList();
+	}
+	
+	public List<Employee> getEmployyeeWithPhoneKindsCriteria(EnumSet<PhoneType> phoneTypes)
+	{
+		CriteriaBuilder builder = manager.getCriteriaBuilder();
+		CriteriaQuery<Employee> critQuery = builder.createQuery(Employee.class);
+		Root<Employee> root = critQuery.from(Employee.class);
+		critQuery.select(root);
+		MapJoin<Employee, PhoneType, Phone> phonesJoin = root.joinMap("phones");
+		Subquery<Integer> firstTypeSq = critQuery.subquery(Integer.class);		
+		firstTypeSq.correlate(phonesJoin);
+		firstTypeSq.select(builder.literal(1)).where(builder.equal(phonesJoin.value().get("phoneType"), builder.parameter(PhoneType.class, "firstType")));
+		Subquery<Integer> secondTypeSq = critQuery.subquery(Integer.class);
+		secondTypeSq.correlate(phonesJoin);
+		secondTypeSq.select(builder.literal(1)).where(builder.equal(phonesJoin.value().get("phoneType"), builder.parameter(PhoneType.class, "secondType")));
+		Predicate firstExistsPredicate = builder.exists(firstTypeSq);
+		Predicate secondExistsPredicate = builder.exists(secondTypeSq);
+		
+		PhoneType firstParameter = null, secondParameter = null;
+		if (phoneTypes.isEmpty())
+		{
+			firstExistsPredicate = builder.not(firstExistsPredicate);
+			secondExistsPredicate = builder.not(secondExistsPredicate);
+			firstParameter = PhoneType.HOME;
+			secondParameter = PhoneType.MOBILE;
+		}
+		else
+		{
+				if (phoneTypes.size() == 1)
+				{
+					secondExistsPredicate = builder.not(secondExistsPredicate);
+					firstParameter = (PhoneType)phoneTypes.toArray()[0];
+					secondParameter = (PhoneType)phoneTypes.complementOf(phoneTypes).toArray()[0];
+				}
+				else
+				{
+					Object[] types = phoneTypes.toArray();
+					firstParameter = (PhoneType)types[0];
+					secondParameter = (PhoneType)types[1];
+				}
+		}
+		
+		Predicate finalPredicate = builder.and(firstExistsPredicate, secondExistsPredicate);
+		critQuery.where(finalPredicate);
+		
+		TypedQuery<Employee> query = manager.createQuery(critQuery);
+		query.setParameter("firstType", firstParameter);
+		query.setParameter("secondType", secondParameter);
 		
 		return query.getResultList();
 	}

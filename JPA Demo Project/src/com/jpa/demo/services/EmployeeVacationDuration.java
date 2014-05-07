@@ -26,8 +26,6 @@ public class EmployeeVacationDuration
 				+ ", totalVacation=" + totalVacation + "]";
 	}
 
-
-
 	private Employee employee;
 	private long totalVacation;
 }
