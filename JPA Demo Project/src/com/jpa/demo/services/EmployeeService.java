@@ -29,6 +29,7 @@ import com.jpa.demo.model.EmployeeType;
 import com.jpa.demo.model.ParkingSpace;
 import com.jpa.demo.model.Phone;
 import com.jpa.demo.model.PhoneType;
+import com.jpa.demo.model.Project;
 import com.jpa.demo.model.VacationEntry;
 
 public class EmployeeService extends AbstractJPAService
@@ -278,13 +279,14 @@ public class EmployeeService extends AbstractJPAService
 		CriteriaQuery<Employee> critQuery = builder.createQuery(Employee.class);
 		Root<Employee> root = critQuery.from(Employee.class);
 		critQuery.select(root);
-		MapJoin<Employee, PhoneType, Phone> phonesJoin = root.joinMap("phones");
 		Subquery<Integer> firstTypeSq = critQuery.subquery(Integer.class);		
-		firstTypeSq.correlate(phonesJoin);
-		firstTypeSq.select(builder.literal(1)).where(builder.equal(phonesJoin.value().get("phoneType"), builder.parameter(PhoneType.class, "firstType")));
+		Root<Employee> firstSqRoot = firstTypeSq.correlate(root);
+		MapJoin<Employee, PhoneType, Phone> firstSqPhoneJoin = firstSqRoot.joinMap("phones");
+		firstTypeSq.select(builder.literal(1)).where(builder.equal(firstSqPhoneJoin.value().get("phoneType"), builder.parameter(PhoneType.class, "firstType")));
 		Subquery<Integer> secondTypeSq = critQuery.subquery(Integer.class);
-		secondTypeSq.correlate(phonesJoin);
-		secondTypeSq.select(builder.literal(1)).where(builder.equal(phonesJoin.value().get("phoneType"), builder.parameter(PhoneType.class, "secondType")));
+		Root<Employee> secondSqRoot = secondTypeSq.correlate(root);
+		MapJoin<Employee, PhoneType, Phone> secondSqPhoneJoin = secondSqRoot.joinMap("phones");
+		secondTypeSq.select(builder.literal(1)).where(builder.equal(secondSqPhoneJoin.value().get("phoneType"), builder.parameter(PhoneType.class, "secondType")));
 		Predicate firstExistsPredicate = builder.exists(firstTypeSq);
 		Predicate secondExistsPredicate = builder.exists(secondTypeSq);
 		
@@ -318,6 +320,32 @@ public class EmployeeService extends AbstractJPAService
 		TypedQuery<Employee> query = manager.createQuery(critQuery);
 		query.setParameter("firstType", firstParameter);
 		query.setParameter("secondType", secondParameter);
+		
+		return query.getResultList();
+	}
+	
+	public List<Employee> getEmployeesWithProject(String projectName)
+	{
+		TypedQuery<Employee> query = manager.createQuery("SELECT emp FROM Employee emp WHERE EXISTS(SELECT 1 FROM emp.projects p WHERE p.name=:name)", Employee.class);
+		query.setParameter("name", projectName);
+		
+		return query.getResultList();
+	}
+	
+	public List<Employee> getEmployeesWithProjectCriteria(String projectName)
+	{
+		CriteriaBuilder builder = manager.getCriteriaBuilder();
+		CriteriaQuery<Employee> critQuery = builder.createQuery(Employee.class);
+		Root<Employee> root = critQuery.from(Employee.class);
+		Subquery<Integer> projSq = critQuery.subquery(Integer.class);
+		Root<Employee> sqRoot = projSq.correlate(root);
+		Join<Employee, Project> sqEmpJoin = sqRoot.join("projects");
+		
+		projSq.select(builder.literal(1)).where(builder.equal(sqEmpJoin.get("name"), builder.parameter(String.class, "name")));
+		critQuery.where(builder.exists(projSq));
+		
+		TypedQuery<Employee> query = manager.createQuery(critQuery);
+		query.setParameter("name", projectName);
 		
 		return query.getResultList();
 	}

@@ -1,8 +1,6 @@
 package com.jpa.demo.model;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.persistence.Entity;
@@ -11,7 +9,6 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
 import com.jpa.utilities.CollectionUtils;
-import com.jpa.utilities.Projector;
 import com.jpa.utilities.Projectors;
 
 @Entity

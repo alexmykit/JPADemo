@@ -23,6 +23,7 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.MapKeyEnumerated;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -312,7 +313,7 @@ public class Employee
 	@ManyToMany
 	private Set<Project> projects = new HashSet<>();
 	
-	@ElementCollection
+	@OneToMany
 	@MapKeyEnumerated(EnumType.STRING)
 	@MapKey(name="phoneType")
 	private Map<PhoneType, Phone> phones = new HashMap<>();

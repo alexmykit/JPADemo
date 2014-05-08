@@ -44,13 +44,13 @@ public class Run
 			emf = Persistence.createEntityManagerFactory(UNIT_NAME);
 			EntityManager em = emf.createEntityManager();
 			Context rootContext = createRootContext(em);
-			
-//			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.MOBILE), false);
+		
+			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.MOBILE), false);
 //			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.HOME), false);
 //			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.HOME, PhoneType.MOBILE), false);
 //			showEmployeesWithPhoneTypes(rootContext, EnumSet.noneOf(PhoneType.class), false);
 			System.out.println("---------------------------------------------------------------------------------");
-			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.MOBILE), true);
+//			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.MOBILE), true);
 //			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.HOME), true);
 //			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.HOME, PhoneType.MOBILE), true);
 //			showEmployeesWithPhoneTypes(rootContext, EnumSet.noneOf(PhoneType.class), true);
@@ -61,6 +61,19 @@ public class Run
 			{
 				emf.close();
 			}
+		}
+	}
+	
+	public static void showEmployeesWithProject(Context rootContext, String projectName, boolean useCriteria)
+	{
+		EmployeeService empService = rootContext.lookupService("EmployeeService", EmployeeService.class);
+		
+		List<Employee> employees = useCriteria ? empService.getEmployeesWithProjectCriteria(projectName) : empService.getEmployeesWithProject(projectName);
+		System.out.println("Number of employees with " + projectName + " project is " + employees.size());
+		
+		for (Employee emp : employees) 
+		{
+			System.out.println(emp.getName() + "\t" + emp.getProjects());
 		}
 	}
 	

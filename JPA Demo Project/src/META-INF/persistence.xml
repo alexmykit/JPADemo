@@ -10,9 +10,9 @@
 		<properties>
 			<!-- if this is true, hibernate will print (to stdout) the SQL it executes, 
 				so you can check it to ensure it's not doing anything crazy -->
-			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.show_sql" value="true" />
 						
-			<property name="hibernate.format_sql" value="false" />
+			<property name="hibernate.format_sql" value="true" />
 			<!-- since most database servers have slightly different versions of the 
 				SQL, Hibernate needs you to choose a dialect so it knows the subtleties of 
 				talking to that server -->
