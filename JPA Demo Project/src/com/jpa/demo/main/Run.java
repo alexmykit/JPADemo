@@ -1,17 +1,21 @@
 package com.jpa.demo.main;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
 import com.jpa.demo.core.Context;
+import com.jpa.demo.model.Action;
 import com.jpa.demo.model.Address;
 import com.jpa.demo.model.Company;
 import com.jpa.demo.model.Department;
@@ -21,7 +25,10 @@ import com.jpa.demo.model.ParkingSpace;
 import com.jpa.demo.model.Phone;
 import com.jpa.demo.model.PhoneType;
 import com.jpa.demo.model.Project;
+import com.jpa.demo.model.SeatInfo;
+import com.jpa.demo.model.SeatPosition;
 import com.jpa.demo.model.SickEntry;
+import com.jpa.demo.model.SocketRule;
 import com.jpa.demo.model.VacationEntry;
 import com.jpa.demo.services.CompanyService;
 import com.jpa.demo.services.DepartmentService;
@@ -30,7 +37,9 @@ import com.jpa.demo.services.EmployeeVacationDuration;
 import com.jpa.demo.services.ParkingSpaceService;
 import com.jpa.demo.services.PhoneService;
 import com.jpa.demo.services.ProjectService;
+import com.jpa.demo.services.SeatInfoService;
 import com.jpa.demo.services.SickEntryService;
+import com.jpa.demo.services.SocketRuleService;
 import com.jpa.demo.test.services.DemoDataGenerationService;
 
 public class Run 
@@ -45,15 +54,24 @@ public class Run
 			EntityManager em = emf.createEntityManager();
 			Context rootContext = createRootContext(em);
 		
-			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.MOBILE), false);
-//			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.HOME), false);
-//			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.HOME, PhoneType.MOBILE), false);
-//			showEmployeesWithPhoneTypes(rootContext, EnumSet.noneOf(PhoneType.class), false);
-			System.out.println("---------------------------------------------------------------------------------");
-//			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.MOBILE), true);
-//			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.HOME), true);
-//			showEmployeesWithPhoneTypes(rootContext, EnumSet.of(PhoneType.HOME, PhoneType.MOBILE), true);
-//			showEmployeesWithPhoneTypes(rootContext, EnumSet.noneOf(PhoneType.class), true);
+			SeatInfoService seatInfoService = rootContext.lookupService("SeatInfoService", SeatInfoService.class);
+			
+			Calendar now = Calendar.getInstance(TimeZone.getDefault());
+			Calendar end = (Calendar)now.clone();
+			Calendar end2 = (Calendar)now.clone();
+			
+			end.add(Calendar.HOUR, 1);
+			end2.add(Calendar.HOUR, 2);			
+			
+			SeatInfo firstInfo = seatInfoService.createSeatInfo(new SeatPosition(1, 1), true, now.getTime(), end.getTime());
+			SeatInfo secondInfo = seatInfoService.createSeatInfo(new SeatPosition(1, 2), true, now.getTime(), end2.getTime());
+			
+			System.out.println("First info is " + firstInfo);
+			System.out.println("Second info is " + secondInfo);
+			em.clear();
+			System.out.println("After clear");
+			System.out.println("First info is " + seatInfoService.findSeatInfo(1, 1));
+			System.out.println("Second info is " + seatInfoService.findSeatInfo(1, 2));
 		}
 		finally
 		{
@@ -266,6 +284,8 @@ public class Run
 		root.addService(new CompanyService("CompanyService", manager));
 		root.addService(new SickEntryService("SickEntryService", manager));
 		root.addService(new DemoDataGenerationService("DemoDataGenerationService", manager));
+		root.addService(new SocketRuleService("SocketRuleService", manager));
+		root.addService(new SeatInfoService("SeatInfoService", manager));
 		
 		return root;
 	}
