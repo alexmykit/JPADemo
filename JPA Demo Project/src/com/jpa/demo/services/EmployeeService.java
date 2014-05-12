@@ -19,8 +19,6 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
 
-import org.hibernate.engine.jdbc.spi.TypeSearchability;
-
 import com.jpa.demo.model.Address;
 import com.jpa.demo.model.Company;
 import com.jpa.demo.model.Department;

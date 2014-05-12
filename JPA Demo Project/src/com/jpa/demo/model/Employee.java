@@ -1,5 +1,6 @@
 package com.jpa.demo.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -31,7 +32,7 @@ import javax.persistence.Transient;
 
 @Entity
 @Access(AccessType.FIELD)
-public class Employee
+public class Employee implements Serializable
 {
 	public Employee() {}
 	
@@ -329,4 +330,6 @@ public class Employee
 	
 	@ElementCollection
 	private Set<String> nickNames = new HashSet<>();
+	
+	private static final long serialVersionUID = -3570219469645496222L;
 }

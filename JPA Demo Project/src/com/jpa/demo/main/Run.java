@@ -18,10 +18,14 @@ import com.jpa.demo.core.Context;
 import com.jpa.demo.model.Action;
 import com.jpa.demo.model.Address;
 import com.jpa.demo.model.Company;
+import com.jpa.demo.model.ContractorWorker;
 import com.jpa.demo.model.Department;
 import com.jpa.demo.model.Employee;
+import com.jpa.demo.model.EmployeeHistory;
 import com.jpa.demo.model.EmployeeType;
+import com.jpa.demo.model.FullTimeWorker;
 import com.jpa.demo.model.ParkingSpace;
+import com.jpa.demo.model.PartTimeWorker;
 import com.jpa.demo.model.Phone;
 import com.jpa.demo.model.PhoneType;
 import com.jpa.demo.model.Project;
@@ -32,6 +36,7 @@ import com.jpa.demo.model.SocketRule;
 import com.jpa.demo.model.VacationEntry;
 import com.jpa.demo.services.CompanyService;
 import com.jpa.demo.services.DepartmentService;
+import com.jpa.demo.services.EmployeeHistoryService;
 import com.jpa.demo.services.EmployeeService;
 import com.jpa.demo.services.EmployeeVacationDuration;
 import com.jpa.demo.services.ParkingSpaceService;
@@ -40,6 +45,7 @@ import com.jpa.demo.services.ProjectService;
 import com.jpa.demo.services.SeatInfoService;
 import com.jpa.demo.services.SickEntryService;
 import com.jpa.demo.services.SocketRuleService;
+import com.jpa.demo.services.WorkerService;
 import com.jpa.demo.test.services.DemoDataGenerationService;
 
 public class Run 
@@ -54,24 +60,26 @@ public class Run
 			EntityManager em = emf.createEntityManager();
 			Context rootContext = createRootContext(em);
 		
-			SeatInfoService seatInfoService = rootContext.lookupService("SeatInfoService", SeatInfoService.class);
+			WorkerService workerService = rootContext.lookupService("WorkerService", WorkerService.class);
 			
-			Calendar now = Calendar.getInstance(TimeZone.getDefault());
-			Calendar end = (Calendar)now.clone();
-			Calendar end2 = (Calendar)now.clone();
+			ContractorWorker contractor = workerService.createContractorWorker("Sam Stone", new Date(), 25000, 365);
+			FullTimeWorker fullTimeWorker = workerService.createFullTimeWorker("Will Rock", new Date(), 100, 10000, 30000);
+			PartTimeWorker partTimeWorker = workerService.createPartTimeWorker("Duke Nukem", new Date(), 365, 10000);
 			
-			end.add(Calendar.HOUR, 1);
-			end2.add(Calendar.HOUR, 2);			
+			System.out.println("Before clear");
+			System.out.println("Contractor: " + contractor);
+			System.out.println("Full time worker: " + fullTimeWorker);
+			System.out.println("Part time worker: " + partTimeWorker);
 			
-			SeatInfo firstInfo = seatInfoService.createSeatInfo(new SeatPosition(1, 1), true, now.getTime(), end.getTime());
-			SeatInfo secondInfo = seatInfoService.createSeatInfo(new SeatPosition(1, 2), true, now.getTime(), end2.getTime());
-			
-			System.out.println("First info is " + firstInfo);
-			System.out.println("Second info is " + secondInfo);
 			em.clear();
+			contractor = (ContractorWorker) workerService.findWorker(contractor.getId());
+			fullTimeWorker = (FullTimeWorker) workerService.findWorker(fullTimeWorker.getId());
+			partTimeWorker = (PartTimeWorker) workerService.findWorker(partTimeWorker.getId());
+			
 			System.out.println("After clear");
-			System.out.println("First info is " + seatInfoService.findSeatInfo(1, 1));
-			System.out.println("Second info is " + seatInfoService.findSeatInfo(1, 2));
+			System.out.println("Contractor: " + contractor);
+			System.out.println("Full time worker: " + fullTimeWorker);
+			System.out.println("Part time worker: " + partTimeWorker);
 		}
 		finally
 		{
@@ -286,6 +294,8 @@ public class Run
 		root.addService(new DemoDataGenerationService("DemoDataGenerationService", manager));
 		root.addService(new SocketRuleService("SocketRuleService", manager));
 		root.addService(new SeatInfoService("SeatInfoService", manager));
+		root.addService(new EmployeeHistoryService("EmployeeHistoryService", manager));
+		root.addService(new WorkerService("WorkerService", manager));
 		
 		return root;
 	}
